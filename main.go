@@ -9,8 +9,7 @@ import (
 const host = "api.telegram.org"
 
 func main() {
-	token := mustToken()
-	tgClient := telegram.New(host, token)
+	tgClient := telegram.New(host, mustToken())
 	// fetcher = fetcher.New()
 	// processor = processor.New()
 
