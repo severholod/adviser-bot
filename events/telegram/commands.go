@@ -38,7 +38,7 @@ func (p *Processor) doCmd(text string, chatID int, username string) error {
 
 func (p *Processor) savePage(chatID int, pageUrl string, username string) (err error) {
 	defer func() {
-		err = utils.WrapError("can`t do command 'save page'", err)
+		err = utils.WrapIfErr("can`t do command 'save page'", err)
 	}()
 
 	page := &storage.Page{
@@ -66,10 +66,11 @@ func (p *Processor) savePage(chatID int, pageUrl string, username string) (err e
 }
 func (p *Processor) sendRandom(chatID int, username string) (err error) {
 	defer func() {
-		err = utils.WrapError("can`t do command 'save random'", err)
+		err = utils.WrapIfErr("can`t do command 'save random'", err)
 	}()
 
 	page, err := p.storage.PickRandom(username)
+
 	if err != nil && !errors.Is(err, storage.ErrNoSaved) {
 		return err
 	}

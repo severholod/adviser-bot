@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const permission = 0774
+const permission = 0755
 
 type Storage struct {
 	basePath string
@@ -23,7 +23,7 @@ func New(basePath string) Storage {
 }
 
 func (s Storage) Save(page *storage.Page) (err error) {
-	defer func() { err = utils.WrapError("can`t save page", err) }()
+	defer func() { err = utils.WrapIfErr("can`t save page", err) }()
 
 	fPath := filepath.Join(s.basePath, page.UserName)
 
@@ -42,7 +42,7 @@ func (s Storage) Save(page *storage.Page) (err error) {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	if err := gob.NewEncoder(file).Encode(page); err != nil {
 		return err
@@ -51,7 +51,7 @@ func (s Storage) Save(page *storage.Page) (err error) {
 	return nil
 }
 func (s Storage) PickRandom(userName string) (page *storage.Page, err error) {
-	defer func() { err = utils.WrapError("can`t pick random page", err) }()
+	defer func() { err = utils.WrapIfErr("can`t pick random page", err) }()
 
 	path := filepath.Join(s.basePath, userName)
 	files, err := os.ReadDir(path)
@@ -86,7 +86,7 @@ func (s Storage) Remove(p *storage.Page) error {
 func (s Storage) IsExist(p *storage.Page) (bool, error) {
 	fName, err := fileName(p)
 	if err != nil {
-		return false, utils.WrapError("can't check if file exists", err)
+		return false, utils.WrapIfErr("can't check if file exists", err)
 	}
 	path := filepath.Join(s.basePath, p.UserName, fName)
 
@@ -95,23 +95,25 @@ func (s Storage) IsExist(p *storage.Page) (bool, error) {
 		return false, nil
 	case err != nil:
 		msg := fmt.Sprintf("can't check if file %s exists", path)
-		return false, utils.WrapError(msg, err)
+		return false, utils.WrapIfErr(msg, err)
 	}
 
 	return true, nil
 }
 
 func (s Storage) decodePage(filePath string) (*storage.Page, error) {
-	file, err := os.Open(filePath)
+	f, err := os.Open(filePath)
 	if err != nil {
-		return nil, utils.WrapError("can`t decode page", err)
+		return nil, utils.WrapError("can't decode page", err)
 	}
-	defer file.Close()
+	defer func() { _ = f.Close() }()
 
 	var p storage.Page
-	if err := gob.NewEncoder(file).Encode(&p); err != nil {
-		return nil, utils.WrapError("can`t decode page", err)
+
+	if err := gob.NewDecoder(f).Decode(&p); err != nil {
+		return nil, utils.WrapError("can't decode page", err)
 	}
+
 	return &p, nil
 }
 

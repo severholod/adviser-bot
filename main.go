@@ -2,22 +2,34 @@ package main
 
 import (
 	"adviser-bot/clients/telegram"
+	"adviser-bot/consumer"
+	telegramProcessor "adviser-bot/events/telegram"
+	"adviser-bot/storage/files"
 	"flag"
 	"log"
 )
 
-const host = "api.telegram.org"
+const (
+	host        = "api.telegram.org"
+	storagePath = "files_storage"
+	batchSize   = 100
+)
 
+// 8356731409:AAFRGQ6fKeihQDsbunuqOTachCKk7-oJVtM
 func main() {
 	tgClient := telegram.New(host, mustToken())
-	// fetcher = fetcher.New()
-	// processor = processor.New()
+	eventsProcessor := telegramProcessor.New(tgClient, files.New(storagePath))
+	log.Println("Service has been started...")
 
-	// consumer.Start(fetcher, processor)
+	eventConsumer := consumer.New(eventsProcessor, eventsProcessor, batchSize)
+
+	if err := eventConsumer.Start(); err != nil {
+		log.Fatal("Service is stopped...", err)
+	}
 }
 
 func mustToken() string {
-	token := flag.String("token-bot-token", "", "access tg-bot token")
+	token := flag.String("tg-bot-token", "", "access tg-bot token")
 	flag.Parse()
 
 	if *token == "" {
