@@ -1,7 +1,7 @@
 package telegram
 
 import (
-	"adviser-bot/lib/e"
+	"adviser-bot/lib/utils"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -42,11 +42,11 @@ func (cl *Client) Updates(offset int, limit int) ([]Update, error) {
 
 	data, err := cl.doRequest(getUpdates, q)
 	if err != nil {
-		return nil, e.Wrap(errorMsg, err)
+		return nil, utils.WrapError(errorMsg, err)
 	}
 	var res UpdatesResponse
 	if err := json.Unmarshal(data, &res); err != nil {
-		return nil, e.Wrap(errorMsg, err)
+		return nil, utils.WrapError(errorMsg, err)
 	}
 
 	return res.Result, nil
@@ -58,7 +58,7 @@ func (cl *Client) SendMessage(chatID int, text string) error {
 
 	_, err := cl.doRequest(sendMessage, q)
 	if err != nil {
-		return e.Wrap("can`t send message", err)
+		return utils.WrapError("can`t send message", err)
 	}
 	return nil
 }
@@ -72,18 +72,18 @@ func (cl *Client) doRequest(method string, query url.Values) ([]byte, error) {
 	}
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		return nil, e.Wrap(errorMsg, err)
+		return nil, utils.WrapError(errorMsg, err)
 	}
 	req.URL.RawQuery = query.Encode()
 	resp, err := cl.client.Do(req)
 	if err != nil {
-		return nil, e.Wrap(errorMsg, err)
+		return nil, utils.WrapError(errorMsg, err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, e.Wrap(errorMsg, err)
+		return nil, utils.WrapError(errorMsg, err)
 	}
 
 	return body, nil
